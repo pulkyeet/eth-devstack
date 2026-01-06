@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  signer1:
+    image: ethereum/client-go:v1.13.5
+    container_name: eth-signer1
+    command:
+      - "--datadir=/data"
+      - "--networkid=1337"
+      - "--port=30303"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.port=8545"
+      - "--http.api=eth,net,web3,personal,admin,txpool"
+      - "--http.corsdomain=*"
+      - "--ws"
+      - "--ws.addr=0.0.0.0"
+      - "--ws.port=8546"
+      - "--ws.api=eth,net,web3"
+      - "--ws.origins=*"
+      - "--mine"
+      - "--miner.etherbase=0xD88253247257370Bb846DCE5fb02383Ba239af82"
+      - "--unlock=0xD88253247257370Bb846DCE5fb02383Ba239af82"
+      - "--password=/data/password.txt"
+      - "--allow-insecure-unlock"
+      - "--nodiscover"
+      - "--verbosity=3"
+    volumes:
+      - ./signer1:/data
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+      - "30303:30303"
+    networks:
+      - eth-network
+
+  signer2:
+    image: ethereum/client-go:v1.13.5
+    container_name: eth-signer2
+    command:
+      - "--datadir=/data"
+      - "--networkid=1337"
+      - "--port=30304"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.port=8545"
+      - "--http.api=eth,net,web3,personal,admin,txpool"
+      - "--http.corsdomain=*"
+      - "--mine"
+      - "--miner.etherbase=0xd7cAFCb9dd460873c393e8fB77f2C87a9F12c85F"
+      - "--unlock=0xd7cAFCb9dd460873c393e8fB77f2C87a9F12c85F"
+      - "--password=/data/password.txt"
+      - "--allow-insecure-unlock"
+      - "--bootnodes=enode://0865a59ed441e384ccca80e131edddd51c307d97705ecafb67c5a1eb850d4518ca8ad30452f940ca1d74c3e16775eeac6dd2fe3dd392ea4e8732243bcd05fbfd@signer1:30303"
+      - "--verbosity=3"
+    volumes:
+      - ./signer2:/data
+    ports:
+      - "8555:8545"
+      - "30304:30304"
+    networks:
+      - eth-network
+    depends_on:
+      - signer1
+
+networks:
+  eth-network:
+    driver: bridge
