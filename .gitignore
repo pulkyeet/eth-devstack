@@ -1,0 +1,46 @@
+# Go
+*.exe
+*.exe~
+*.dll
+*.so*.dylib
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# Node
+node_modules/
+.next/
+dist/
+*.log
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Blockchain Data
+blockchain/*/geth
+blockchain/*/keystore
+*.ipc
+
+# Secrets
+*.key
+*.pem
+*.env
+!.env.example
+password.txt
+
+# Database
+*.db
+*.sqlite
+
+# Misc
+tmp/
+.cache/
