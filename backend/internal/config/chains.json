@@ -1,0 +1,19 @@
+{
+    "chains": [
+        {
+            "chain_id": 1337,
+            "name": "Local Testnet",
+            "short_name": "local",
+            "native_symbol": "ETH",
+            "rpc_endpoint": "http://localhost:8545",
+            "ws_endpoint": "ws://localhost:8546",
+            "block_time_seconds": 15,
+            "is_active": true,
+            "is_testnet": true,
+            "supports_eip1559": false,
+            "gas_price_oracle": "legacy",
+            "backup_rpc_endpoints": []
+        }
+    ],
+    "default_chain_id": 1337
+}
