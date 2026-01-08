@@ -15,13 +15,13 @@ type Transaction struct {
 	Gas                  int64     `json:"gas" db:"gas"`
 	GasPrice             *string   `json:"gas_price,omitempty" db:"gas_price"`
 	MaxFeePerGas         *string   `json:"max_fee_per_gas,omitempty" db:"max_fee_per_gas"`
-	MaxPriorityFeePerGas *string   `json:"max_prioority_fee_per_gas,omitempty" db:"max_priority_fee_per_gas"`
+	MaxPriorityFeePerGas *string   `json:"max_priority_fee_per_gas,omitempty" db:"max_priority_fee_per_gas"`
 	Input                *string   `json:"input,omitempty" db:"input"`
 	Nonce                int64     `json:"nonce" db:"nonce"`
 	TransactionType      int       `json:"transaction_type" db:"transaction_type"`
 	Status               *int      `json:"status,omitempty" db:"status"`
 	GasUsed              *int64    `json:"gas_used,omitempty" db:"gas_used"`
-	CumulativeGasUsed    *int64    `json:"cumulative_gas_used,omitempty" db:"cumulative_gas_sued"`
+	CumulativeGasUsed    *int64    `json:"cumulative_gas_used,omitempty" db:"cumulative_gas_used"`
 	EffectiveGasPrice    *string   `json:"effective_gas_price,omitempty" db:"effective_gas_price"`
 	ContractAddress      *string   `json:"contract_address,omitempty" db:"contract_address"`
 	LogsBloom            *string   `json:"logs_bloom,omitempty" db:"logs_bloom"`

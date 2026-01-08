@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type chain struct {
+type Chain struct {
 	ChainID          int64     `json:"chain_id" db:"chain_id"`
 	Name             string    `json:"name" db:"name"`
 	ShortName        string    `json:"short_name" db:"short_name"`

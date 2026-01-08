@@ -11,6 +11,7 @@ Build a production-architecture Ethereum development environment demonstrating:
 - **Smart contract expertise** (50% of effort)
 - **Full-stack blockchain engineering** (30%)
 - **System design & architecture** (20%)
+- **GitHub repo link: "github.com/pulkyeet/eth-devstack/"**
 
 ### Core Principles
 1. **Security First** - Document security considerations, even for dev features
@@ -170,7 +171,7 @@ Deployment:      Vercel (frontend), VPS/Railway (backend - optional)
 ## III. REPOSITORY STRUCTURE (MONOREPO)
 
 ```
-ethereum-project/                    # Root monorepo
+eth-devstack/                    # Root monorepo
 ├── README.md                        # Project overview
 ├── docker-compose.yml               # All services
 ├── .gitignore
