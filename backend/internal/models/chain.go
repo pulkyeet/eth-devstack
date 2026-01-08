@@ -8,7 +8,7 @@ type Chain struct {
 	ShortName        string    `json:"short_name" db:"short_name"`
 	NativeSymbol     string    `json:"native_symbol" db:"native_symbol"`
 	RPCEndpoint      string    `json:"rpc_endpoint" db:"rpc_endpoint"`
-	WSEndpoint       string    `json:"ws_endpoint" db:"ws_endpoint"`
+	WSEndpoint       *string   `json:"ws_endpoint,omitempty" db:"ws_endpoint"`
 	BlockTimeSeconds int       `json:"block_time_seconds" db:"block_time_seconds"`
 	IsActive         bool      `json:"is_active" db:"is_active"`
 	IsTestnet        bool      `json:"is_testnet" db:"is_testnet"`

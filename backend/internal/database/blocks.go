@@ -183,3 +183,9 @@ func (db *DB) DeleteBlocksFromHeight(ctx context.Context, chainID, blockNumber i
 	}
 	return nil
 }
+
+func (db *DB) CountBlocks(ctx context.Context, chainID int64) (int64, error) {
+	var count int64
+	err := db.conn.QueryRowContext(ctx, `SELECT COUNT(*) FROM blocks WHERE chain_id = $1`, chainID).Scan(&count)
+	return count, err
+}

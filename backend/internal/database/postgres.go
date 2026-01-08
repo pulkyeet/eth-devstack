@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
-
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
