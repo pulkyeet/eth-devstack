@@ -39,6 +39,8 @@ func NewServer(db *database.DB, logger *zap.Logger, port string) *Server {
 	addrHandler := handlers.NewAddressHandler(db)
 	chainHandler := handlers.NewChainHandler(db)
 	searchHandler := handlers.NewSearchHandler(db)
+	streamHandler := handlers.NewStreamHandler(db, logger)
+	statsHandler := handlers.NewStatsHandler(db)
 
 	api := app.Group("/api/v1")
 
@@ -55,6 +57,12 @@ func NewServer(db *database.DB, logger *zap.Logger, port string) *Server {
 	api.Get("/addresses/:address/:/transactions", addrHandler.GetAddressTransactions)
 
 	api.Get("/search", searchHandler.Search)
+
+	api.Get("/stream/blocks", streamHandler.StreamBlocks)
+
+	api.Get("/stats", statsHandler.GetStats)
+
+	api.Get("/addresses/:address/tokens", addrHandler.GetAddressTokens)
 
 	return &Server{
 		app: app,

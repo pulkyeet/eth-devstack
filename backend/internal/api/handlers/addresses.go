@@ -51,3 +51,16 @@ func (h *AddressHandler) GetAddressTransactions(c *fiber.Ctx) error {
 		"transactions": txs,
 	}, &cID)
 }
+
+func (h *AddressHandler) GetAddressTokens(c *fiber.Ctx) error {
+	chainID := c.QueryInt("chain_id", 1337)
+	address := c.Params("address")
+
+	tokens, err := h.db.GetTokensByAddress(c.Context(), int64(chainID), address)
+	if err != nil {
+		return responses.Error(c, 500, "DATABASE_ERROR", "Failed to fetch tokens", err.Error())
+	}
+
+	cID := int64(chainID)
+	return responses.Success(c, fiber.Map{"tokens": tokens}, &cID)
+}

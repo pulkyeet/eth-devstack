@@ -29,32 +29,34 @@ func NewTxProcessor(db *database.DB, client *blockchain.ChainClient, logger *zap
 
 func (tp *TxProcessor) ProcessTransaction(ctx context.Context, tx *types.Transaction, blockNumber uint64, blockHash string, txIndex int, blockTime time.Time, chainID int64) error {
 	msg, err := types.Sender(types.LatestSignerForChainID(big.NewInt(chainID)), tx)
-	if err!=nil {
+	if err != nil {
 		return fmt.Errorf("Failed to get sender: %w", err)
 	}
 
 	receipt, err := tp.client.GetTransactionReceipt(ctx, tx.Hash().Hex())
-	if err!=nil {
+	if err != nil {
 		tp.logger.Warnw("Failed to get receipt", "tx_hash", tx.Hash().Hex(), "error", err)
 		receipt = nil
 	}
+	
 	txType := int(tx.Type())
 	txModel := &models.Transaction{
-		ChainID: chainID,
-		Hash: tx.Hash().Hex(),
-		BlockNumber: int64(blockNumber),
-		BlockHash: blockHash,
+		ChainID:          chainID,
+		Hash:             tx.Hash().Hex(),
+		BlockNumber:      int64(blockNumber),
+		BlockHash:        blockHash,
 		TransactionIndex: txIndex,
-		FromAddress: msg.Hex(),
-		ToAddress: nil,
-		Value: tx.Value().String(),
-		Gas: int64(tx.Gas()),
-		GasPrice: bigIntToStringPtr(tx.GasPrice()),
-		Input: toStringPtr(fmt.Sprintf("0x%x", tx.Data())),
-		Nonce: int64(tx.Nonce()),
-		TransactionType: txType,
-		Timestamp: blockTime,
+		FromAddress:      msg.Hex(),
+		ToAddress:        nil,
+		Value:            tx.Value().String(),
+		Gas:              int64(tx.Gas()),
+		GasPrice:         bigIntToStringPtr(tx.GasPrice()),
+		Input:            toStringPtr(fmt.Sprintf("0x%x", tx.Data())),
+		Nonce:            int64(tx.Nonce()),
+		TransactionType:  txType,
+		Timestamp:        blockTime,
 	}
+	
 	if tx.To() != nil {
 		to := tx.To().Hex()
 		txModel.ToAddress = &to
@@ -73,7 +75,7 @@ func (tp *TxProcessor) ProcessTransaction(ctx context.Context, tx *types.Transac
 		cumulativeGasUsed := int64(receipt.CumulativeGasUsed)
 		txModel.CumulativeGasUsed = &cumulativeGasUsed
 		txModel.EffectiveGasPrice = bigIntToStringPtr(receipt.EffectiveGasPrice)
-
+		
 		if receipt.ContractAddress.Hex() != "0x0000000000000000000000000000000000000000" {
 			contractAddr := receipt.ContractAddress.Hex()
 			txModel.ContractAddress = &contractAddr
@@ -82,8 +84,10 @@ func (tp *TxProcessor) ProcessTransaction(ctx context.Context, tx *types.Transac
 		logsBloom := fmt.Sprintf("0x%x", receipt.Bloom[:])
 		txModel.LogsBloom = &logsBloom
 	}
-	if err := tp.db.InsertTransaction(ctx, txModel); err!=nil {
+	
+	if err := tp.db.InsertTransaction(ctx, txModel); err != nil {
 		return fmt.Errorf("Failed to insert transaction: %w", err)
 	}
+	
 	return nil
 }
