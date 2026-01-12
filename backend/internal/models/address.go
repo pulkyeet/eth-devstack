@@ -6,7 +6,7 @@ type Address struct {
 	ID              int64      `json:"id" db:"id"`
 	ChainID         int64      `json:"chain_id" db:"chain_id"`
 	Address         string     `json:"address" db:"address"`
-	Balance         int64      `json:"balance" db:"balance"`
+	Balance         string      `json:"balance" db:"balance"`
 	Nonce           int64      `json:"nonce" db:"nonce"`
 	IsContract      bool       `json:"is_contract" db:"is_contract"`
 	ContractCreator *string    `json:"contract_creator,omitempty" db:"contract_creator"`

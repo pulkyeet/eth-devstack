@@ -54,7 +54,7 @@ func NewServer(db *database.DB, logger *zap.Logger, port string) *Server {
 	api.Get("/transactions/:hash", txHandler.GetTransaction)
 
 	api.Get("/addresses/:address", addrHandler.GetAddress)
-	api.Get("/addresses/:address/:/transactions", addrHandler.GetAddressTransactions)
+	api.Get("/addresses/:address/transactions", addrHandler.GetAddressTransactions)
 
 	api.Get("/search", searchHandler.Search)
 

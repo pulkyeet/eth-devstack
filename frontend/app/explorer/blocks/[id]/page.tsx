@@ -18,23 +18,41 @@ interface BlockDetail {
   nonce: string;
   size: number;
   tx_count: number;
-  transactions: string[];
+}
+
+interface Transaction {
+  hash: string;
+  from_address: string;
+  to_address: string | null;
+  value: string;
+  gas_used: number;
+  status: number;
 }
 
 export default function BlockDetailPage() {
   const params = useParams();
+  const blockId = params.id as string;
+  
   const [block, setBlock] = useState<BlockDetail | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:8080/api/v1/blocks/${params.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setBlock(data.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [params.id]);
+    Promise.all([
+      fetch(`http://localhost:8080/api/v1/blocks/${blockId}?chain_id=1337`).then(r => r.json()),
+      fetch(`http://localhost:8080/api/v1/transactions?chain_id=1337&block_number=${blockId}&limit=100`).then(r => r.json())
+    ])
+    .then(([blockData, txData]) => {
+      if (blockData.success) {
+        setBlock(blockData.data);
+      }
+      if (txData.success && txData.data.transactions) {
+        setTransactions(txData.data.transactions);
+      }
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
+  }, [blockId]);
 
   if (loading) {
     return (
@@ -52,6 +70,11 @@ export default function BlockDetailPage() {
     );
   }
 
+  const formatValue = (wei: string) => {
+    const eth = BigInt(wei) / BigInt(10 ** 18);
+    return eth.toString();
+  };
+
   const details = [
     { label: 'Block Height', value: block.block_number, mono: false, color: 'purple' },
     { label: 'Timestamp', value: new Date(block.timestamp).toLocaleString(), mono: false },
@@ -59,7 +82,7 @@ export default function BlockDetailPage() {
     { label: 'Miner', value: block.miner, mono: true, color: 'cyan' },
     { label: 'Gas Used', value: `${block.gas_used.toLocaleString()} (${((block.gas_used / block.gas_limit) * 100).toFixed(2)}%)`, mono: true },
     { label: 'Gas Limit', value: block.gas_limit.toLocaleString(), mono: true },
-    { label: 'Base Fee', value: `${block.base_fee_per_gas || '0'} ETH`, mono: true },
+    { label: 'Base Fee', value: `${block.base_fee_per_gas || '0'} wei`, mono: true },
     { label: 'Hash', value: block.hash, mono: true, color: 'cyan' },
     { label: 'Parent Hash', value: block.parent_hash, mono: true, color: 'cyan' },
   ];
@@ -97,15 +120,75 @@ export default function BlockDetailPage() {
       </Card>
 
       <Card>
-        <h2 className="text-2xl mb-6 text-white font-normal">Transactions</h2>
+        <h2 className="text-2xl mb-6 text-white font-normal">
+          Transactions ({block.tx_count})
+        </h2>
         
-        {block.tx_count === 0 ? (
+        {transactions.length === 0 ? (
           <div className="text-[var(--text-dim)] text-center py-8">
             No transactions in this block
           </div>
         ) : (
-          <div className="text-[var(--cyan)]">
-            {block.tx_count} transaction(s) - Transaction detail page coming soon
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[var(--cyan)] border-opacity-30">
+                  <th className="text-left py-3 px-4 text-xs text-[var(--text-dim)] uppercase">TX HASH</th>
+                  <th className="text-left py-3 px-4 text-xs text-[var(--text-dim)] uppercase">FROM</th>
+                  <th className="text-left py-3 px-4 text-xs text-[var(--text-dim)] uppercase">TO</th>
+                  <th className="text-right py-3 px-4 text-xs text-[var(--text-dim)] uppercase">VALUE</th>
+                  <th className="text-right py-3 px-4 text-xs text-[var(--text-dim)] uppercase">GAS</th>
+                  <th className="text-center py-3 px-4 text-xs text-[var(--text-dim)] uppercase">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => (
+                  <tr key={tx.hash} className="border-b border-[var(--cyan)] border-opacity-10 hover:bg-white/5">
+                    <td className="py-3 px-4">
+                      <Link 
+                        href={`/explorer/tx/${tx.hash}`}
+                        className="text-[var(--cyan)] hover:text-[var(--pink)] mono text-sm"
+                      >
+                        {tx.hash.slice(0, 10)}...{tx.hash.slice(-8)}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Link 
+                        href={`/explorer/address/${tx.from_address}`}
+                        className="text-[var(--cyan)] hover:text-[var(--pink)] mono text-sm"
+                      >
+                        {tx.from_address.slice(0, 8)}...{tx.from_address.slice(-6)}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4">
+                      {tx.to_address ? (
+                        <Link 
+                          href={`/explorer/address/${tx.to_address}`}
+                          className="text-[var(--cyan)] hover:text-[var(--pink)] mono text-sm"
+                        >
+                          {tx.to_address.slice(0, 8)}...{tx.to_address.slice(-6)}
+                        </Link>
+                      ) : (
+                        <span className="text-[var(--text-dim)] text-sm">[Contract Creation]</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right mono text-sm">
+                      {formatValue(tx.value)} ETH
+                    </td>
+                    <td className="py-3 px-4 text-right mono text-sm text-[var(--text-dim)]">
+                      {tx.gas_used.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {tx.status === 1 ? (
+                        <span className="text-green-400">✓</span>
+                      ) : (
+                        <span className="text-red-400">✗</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </Card>
