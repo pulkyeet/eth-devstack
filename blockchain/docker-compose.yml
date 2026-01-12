@@ -11,19 +11,20 @@ services:
       - "--http"
       - "--http.addr=0.0.0.0"
       - "--http.port=8545"
-      - "--http.api=eth,net,web3,personal,admin,txpool"
+      - "--http.api=eth,net,web3,personal,admin,txpool,debug"
       - "--http.corsdomain=*"
+      - "--http.vhosts=*"
       - "--ws"
       - "--ws.addr=0.0.0.0"
       - "--ws.port=8546"
       - "--ws.api=eth,net,web3"
       - "--ws.origins=*"
       - "--mine"
-      - "--miner.etherbase=0xD88253247257370Bb846DCE5fb02383Ba239af82"
-      - "--unlock=0xD88253247257370Bb846DCE5fb02383Ba239af82"
+      - "--miner.etherbase=0xc6BCfea104dBC7cB26CC990e33e58fEBd62fa533"
+      - "--miner.recommit=500ms"
+      - "--unlock=0xc6BCfea104dBC7cB26CC990e33e58fEBd62fa533"
       - "--password=/data/password.txt"
       - "--allow-insecure-unlock"
-      - "--nodiscover"
       - "--verbosity=3"
     volumes:
       - ./signer1:/data
@@ -33,6 +34,7 @@ services:
       - "30303:30303"
     networks:
       - eth-network
+    restart: unless-stopped
 
   signer2:
     image: ethereum/client-go:v1.13.5
@@ -40,28 +42,192 @@ services:
     command:
       - "--datadir=/data"
       - "--networkid=1337"
-      - "--port=30304"
+      - "--port=30303"
       - "--http"
       - "--http.addr=0.0.0.0"
       - "--http.port=8545"
-      - "--http.api=eth,net,web3,personal,admin,txpool"
+      - "--http.api=eth,net,web3,personal,admin,txpool,debug"
       - "--http.corsdomain=*"
+      - "--http.vhosts=*"
       - "--mine"
-      - "--miner.etherbase=0xd7cAFCb9dd460873c393e8fB77f2C87a9F12c85F"
-      - "--unlock=0xd7cAFCb9dd460873c393e8fB77f2C87a9F12c85F"
+      - "--miner.etherbase=0x529166Fe40a2912d369881D8d5c4E63f75e9e1f8"
+      - "--miner.recommit=500ms"
+      - "--unlock=0x529166Fe40a2912d369881D8d5c4E63f75e9e1f8"
       - "--password=/data/password.txt"
       - "--allow-insecure-unlock"
-      - "--bootnodes=enode://0865a59ed441e384ccca80e131edddd51c307d97705ecafb67c5a1eb850d4518ca8ad30452f940ca1d74c3e16775eeac6dd2fe3dd392ea4e8732243bcd05fbfd@signer1:30303"
+      - "--bootnodes=enode://23ce3880ab80f67a7f0fc28769429f713dd72e26a2f63b95b7bcbb6f33c152a463e0069aef8eee5b47ebd716905745d49757e3be24f29a26155945997148151d@signer1:30303"
       - "--verbosity=3"
     volumes:
       - ./signer2:/data
-    ports:
-      - "8555:8545"
-      - "30304:30304"
     networks:
       - eth-network
+    restart: unless-stopped
     depends_on:
       - signer1
+
+  signer3:
+    image: ethereum/client-go:v1.13.5
+    container_name: eth-signer3
+    command:
+      - "--datadir=/data"
+      - "--networkid=1337"
+      - "--port=30303"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.port=8545"
+      - "--http.api=eth,net,web3,personal,admin,txpool,debug"
+      - "--http.corsdomain=*"
+      - "--http.vhosts=*"
+      - "--mine"
+      - "--miner.etherbase=0x52688b264bd5FFA39A3df49D4BcbE91CC561D9fb"
+      - "--miner.recommit=500ms"
+      - "--unlock=0x52688b264bd5FFA39A3df49D4BcbE91CC561D9fb"
+      - "--password=/data/password.txt"
+      - "--allow-insecure-unlock"
+      - "--bootnodes=enode://23ce3880ab80f67a7f0fc28769429f713dd72e26a2f63b95b7bcbb6f33c152a463e0069aef8eee5b47ebd716905745d49757e3be24f29a26155945997148151d@signer1:30303"
+      - "--verbosity=3"
+    volumes:
+      - ./signer3:/data
+    networks:
+      - eth-network
+    restart: unless-stopped
+    depends_on:
+      - signer1
+
+  signer4:
+    image: ethereum/client-go:v1.13.5
+    container_name: eth-signer4
+    command:
+      - "--datadir=/data"
+      - "--networkid=1337"
+      - "--port=30303"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.port=8545"
+      - "--http.api=eth,net,web3,personal,admin,txpool,debug"
+      - "--http.corsdomain=*"
+      - "--http.vhosts=*"
+      - "--mine"
+      - "--miner.etherbase=0x5F67D2ACab6115FD6E337a852fFa7f04e9ADb7ED"
+      - "--miner.recommit=500ms"
+      - "--unlock=0x5F67D2ACab6115FD6E337a852fFa7f04e9ADb7ED"
+      - "--password=/data/password.txt"
+      - "--allow-insecure-unlock"
+      - "--bootnodes=enode://23ce3880ab80f67a7f0fc28769429f713dd72e26a2f63b95b7bcbb6f33c152a463e0069aef8eee5b47ebd716905745d49757e3be24f29a26155945997148151d@signer1:30303"
+      - "--verbosity=3"
+    volumes:
+      - ./signer4:/data
+    networks:
+      - eth-network
+    restart: unless-stopped
+    depends_on:
+      - signer1
+
+  signer5:
+    image: ethereum/client-go:v1.13.5
+    container_name: eth-signer5
+    command:
+      - "--datadir=/data"
+      - "--networkid=1337"
+      - "--port=30303"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.port=8545"
+      - "--http.api=eth,net,web3,personal,admin,txpool,debug"
+      - "--http.corsdomain=*"
+      - "--http.vhosts=*"
+      - "--mine"
+      - "--miner.etherbase=0x44Ec5ABDB6E43C42Da49d960C31af5d550f413c9"
+      - "--miner.recommit=500ms"
+      - "--unlock=0x44Ec5ABDB6E43C42Da49d960C31af5d550f413c9"
+      - "--password=/data/password.txt"
+      - "--allow-insecure-unlock"
+      - "--bootnodes=enode://23ce3880ab80f67a7f0fc28769429f713dd72e26a2f63b95b7bcbb6f33c152a463e0069aef8eee5b47ebd716905745d49757e3be24f29a26155945997148151d@signer1:30303"
+      - "--verbosity=3"
+    volumes:
+      - ./signer5:/data
+    networks:
+      - eth-network
+    restart: unless-stopped
+    depends_on:
+      - signer1
+
+  signer6:
+    image: ethereum/client-go:v1.13.5
+    container_name: eth-signer6
+    command:
+      - "--datadir=/data"
+      - "--networkid=1337"
+      - "--port=30303"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.port=8545"
+      - "--http.api=eth,net,web3,personal,admin,txpool,debug"
+      - "--http.corsdomain=*"
+      - "--http.vhosts=*"
+      - "--mine"
+      - "--miner.etherbase=0x0b18dc66d9837E7eED25B6a8CFFBe16a82eA1599"
+      - "--miner.recommit=500ms"
+      - "--unlock=0x0b18dc66d9837E7eED25B6a8CFFBe16a82eA1599"
+      - "--password=/data/password.txt"
+      - "--allow-insecure-unlock"
+      - "--bootnodes=enode://23ce3880ab80f67a7f0fc28769429f713dd72e26a2f63b95b7bcbb6f33c152a463e0069aef8eee5b47ebd716905745d49757e3be24f29a26155945997148151d@signer1:30303"
+      - "--verbosity=3"
+    volumes:
+      - ./signer6:/data
+    networks:
+      - eth-network
+    restart: unless-stopped
+    depends_on:
+      - signer1
+
+  signer7:
+    image: ethereum/client-go:v1.13.5
+    container_name: eth-signer7
+    command:
+      - "--datadir=/data"
+      - "--networkid=1337"
+      - "--port=30303"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.port=8545"
+      - "--http.api=eth,net,web3,personal,admin,txpool,debug"
+      - "--http.corsdomain=*"
+      - "--http.vhosts=*"
+      - "--mine"
+      - "--miner.etherbase=0xeEf5100728b68504F635150224766861A2888B84"
+      - "--miner.recommit=500ms"
+      - "--unlock=0xeEf5100728b68504F635150224766861A2888B84"
+      - "--password=/data/password.txt"
+      - "--allow-insecure-unlock"
+      - "--bootnodes=enode://23ce3880ab80f67a7f0fc28769429f713dd72e26a2f63b95b7bcbb6f33c152a463e0069aef8eee5b47ebd716905745d49757e3be24f29a26155945997148151d@signer1:30303"
+      - "--verbosity=3"
+    volumes:
+      - ./signer7:/data
+    networks:
+      - eth-network
+    restart: unless-stopped
+    depends_on:
+      - signer1
+
+  tx-generator:
+    build:
+      context: ./tx-generator
+      dockerfile: Dockerfile
+    container_name: eth-tx-generator
+    environment:
+      - RPC_URL=http://signer1:8545
+      - ACCOUNTS_FILE=/data/accounts.json
+    volumes:
+      - ./setup/accounts.json:/data/accounts.json:ro
+    networks:
+      - eth-network
+    restart: unless-stopped
+    depends_on:
+      - signer1
+      - signer2
+      - signer3
+      - signer4
 
 networks:
   eth-network:

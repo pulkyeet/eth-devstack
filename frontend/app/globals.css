@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --cyan: #00f5ff;
+  --pink: #ff0055;
+  --purple: #b400ff;
+  --bg: #000000;
+  --bg-card: #0a0a0a;
+  --text: #ffffff;
+  --text-dim: #8b949e;
+  
+  --glow-cyan: 0 0 15px rgba(0, 245, 255, 0.6), 0 0 30px rgba(0, 245, 255, 0.4);
+  --glow-pink: 0 0 15px rgba(255, 0, 85, 0.6), 0 0 30px rgba(255, 0, 85, 0.4);
+  --glow-purple: 0 0 15px rgba(180, 0, 255, 0.6), 0 0 30px rgba(180, 0, 255, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Animated gradient background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(0, 245, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 0, 85, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(180, 0, 255, 0.05) 0%, transparent 50%);
+  animation: gradientShift 15s ease infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes gradientShift {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Cursor glow effect */
+#cursor-glow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(0, 245, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: screen;
+  transition: transform 0.1s ease-out;
+}
+
+/* Clip path utilities */
+.clip-angle {
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.clip-angle-sm {
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+/* Glowing borders */
+.border-glow {
+  border: 1px solid var(--cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.border-glow-pink {
+  border: 1px solid var(--pink);
+  box-shadow: var(--glow-pink);
+}
+
+/* Aggressive button - angled top-left and bottom-right */
+.aggressive-btn {
+  position: relative;
+  padding: 12px 28px;
+  background: transparent;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.aggressive-btn:hover {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.aggressive-btn.active {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: var(--glow-cyan);
+  border-color: var(--cyan);
+}
+
+.aggressive-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--pink);
+  box-shadow: var(--glow-pink);
+}
+
+/* Cyber cards */
+.cyber-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--cyan);
+  box-shadow: var(--glow-cyan);
+  padding: 16px 20px;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.cyber-card:hover {
+  border-color: var(--purple);
+  box-shadow: var(--glow-purple);
+  transform: translateY(-2px);
+}
+
+/* Pink accent bar */
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--pink);
+  box-shadow: var(--glow-pink);
+}
+
+/* Typography */
+h1, h2, h3 {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cyan);
+}
+
+.mono {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Purple highlights */
+.highlight-purple {
+  color: var(--purple);
+  text-shadow: var(--glow-purple);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cyan);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pink);
+}
