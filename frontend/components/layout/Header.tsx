@@ -13,7 +13,7 @@ export default function Header() {
     if (!searchQuery.trim()) return;
 
     const query = searchQuery.trim();
-    
+
     // Detect what type of query it is
     if (query.startsWith('0x')) {
       if (query.length === 66) {
@@ -33,7 +33,7 @@ export default function Header() {
     } else {
       alert('Invalid search query. Enter:\n- Block number (e.g., 123)\n- Block/tx hash (0x...)\n- Address (0x...)');
     }
-    
+
     setSearchQuery('');
   };
 
@@ -49,36 +49,45 @@ export default function Header() {
           </Link>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-8">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by Address / Tx Hash / Block #"
-                className="w-full bg-black/50 border border-cyan-500/30 rounded px-4 py-2 pr-10 
-                         text-sm font-mono text-white placeholder-zinc-500
-                         focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400
-                         transition-all"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-cyan-300"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
+          <form onSubmit={handleSearch} className="flex-1 max-w-3xl mx-8">
+            <div className="flex items-stretch gap-3">
+              <div className="relative flex-1">
+                {/* Corner accents */}
+                <div className="absolute top-0 left-0 w-2 h-2 border-l border-t border-[var(--cyan)]"
+                  style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}></div>
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-[var(--cyan)]"
+                  style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}></div>
+
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by Address / Tx Hash / Block"
+                  className="w-full h-full bg-black/70 border border-[var(--cyan)] px-4 py-3
+                 text-sm font-mono text-white placeholder-zinc-500
+                 focus:outline-none focus:border-[var(--purple)] focus:shadow-[0_0_15px_rgba(180,0,255,0.4)]
+                 transition-all"
+                  style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}
+                />
+              </div>
+              <span>
+                <button type="submit" className="aggressive-btn" style={{ padding: '0 24px', height: '100%' }}>
+                  SEARCH
+                </button>
+              </span>
             </div>
           </form>
 
           {/* Nav Buttons */}
           <div className="flex items-center gap-3">
-            <Link href="/explorer" className="cyber-button px-4 py-2">
-              Blocks
+            <Link href="/explorer/blocks">
+              <button className="cyber-button">Blocks</button>
             </Link>
-            <Link href="/explorer" className="cyber-button px-4 py-2">
-              Transactions
+            <Link href="/explorer">
+              <button className="cyber-button">Transactions</button>
+            </Link>
+            <Link href="/explorer">
+              <button className="cyber-button">Addresses</button>
             </Link>
           </div>
         </div>

@@ -3,33 +3,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { createBlockStream } from '@/lib/api';
+import { formatTimestamp } from '@/lib/utils';
+import type { Block } from '@/lib/types';
 
-interface Block {
-  block_number: number;
-  hash: string;
-  timestamp: string;
-  miner: string;
-  tx_count: number;
-  gas_used: number;
-  gas_limit: number;
-  size: number;
-}
-
-function timeAgo(timestamp: string): string {
-  const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  return `${hours}h ago`;
-}
+const CHAIN_ID = 1337;
 
 export default function ExplorerHome() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Initial fetch
   useEffect(() => {
-    fetch('http://localhost:8080/api/v1/blocks?limit=10')
+    fetch(`http://localhost:8080/api/v1/blocks?chain_id=${CHAIN_ID}&limit=10`)
       .then((res) => res.json())
       .then((data) => {
         setBlocks(data.data.blocks || []);
@@ -38,69 +25,86 @@ export default function ExplorerHome() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-12">
-        <div className="text-[var(--cyan)] text-center text-2xl animate-pulse">LOADING...</div>
-      </div>
-    );
-  }
+  // Real-time updates via SSE
+  useEffect(() => {
+    const eventSource = createBlockStream(CHAIN_ID);
+
+    eventSource.addEventListener('block', (event) => {
+      const newBlock: Block = JSON.parse(event.data);
+      setBlocks((prev) => [newBlock, ...prev.slice(0, 9)]);
+    });
+
+    eventSource.onerror = () => eventSource.close();
+    return () => eventSource.close();
+  }, []);
+
+  if (loading) return <LoadingSpinner message="LOADING BLOCKS" />;
 
   return (
     <div className="container mx-auto px-6 py-8">
-      {/* Removed RECENT BLOCKS heading */}
-      
-      <div className="space-y-4">
+      <div className="space-y-10">
         {blocks.map((block) => {
-          const gasPercent = ((block.gas_used / block.gas_limit) * 100).toFixed(1);
-          
+          const gasPercent = block.gas_limit ? ((block.gas_used / block.gas_limit) * 100).toFixed(1) : '0';
+
           return (
             <Link key={block.hash} href={`/explorer/blocks/${block.block_number}`}>
               <Card>
-                <div className="grid grid-cols-[140px_1fr_100px_140px_140px_120px_200px] gap-8 items-center">
+                <div className="grid grid-cols-[120px_1fr_90px_100px_160px_180px_180px] gap-6 items-center">
                   <div>
-                    <div className="text-xs text-[var(--text-dim)] mb-1 uppercase tracking-wider">Block</div>
-                    <div className="text-2xl font-bold highlight-purple">
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider">Block</div>
+                    <div className="text-2xl font-bold text-purple-400">
                       #{block.block_number}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-[var(--text-dim)] mb-1 uppercase tracking-wider">Hash</div>
-                    <div className="mono text-base text-[var(--cyan)]">
-                      {block.hash.slice(0, 24)}...{block.hash.slice(-10)}
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider">Hash</div>
+                    <div className="font-mono text-sm text-cyan-400">
+                      {block.hash.slice(0, 20)}...{block.hash.slice(-8)}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-[var(--text-dim)] mb-1 uppercase tracking-wider">Age</div>
-                    <div className="text-base font-semibold text-white">{timeAgo(block.timestamp)}</div>
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider">Age</div>
+                    <div className="text-sm font-semibold text-white">{formatTimestamp(block.timestamp)}</div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-[var(--text-dim)] mb-1 uppercase tracking-wider">Transactions</div>
-                    <div className="text-xl font-bold text-[var(--pink)]">{block.tx_count}</div>
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider">Txs</div>
+                    <div className="text-xl font-bold text-pink-400">{block.tx_count}</div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-[var(--text-dim)] mb-1 uppercase tracking-wider">Gas Used</div>
-                    <div className="text-base">
-                      <span className="text-[var(--purple)] font-bold">{gasPercent}%</span>
-                      <span className="text-[var(--text-dim)] text-sm ml-1">
-                        ({(block.gas_used / 1000000).toFixed(2)}M)
-                      </span>
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider">Gas Used</div>
+                    <div className="space-y-2">
+                      <div className="text-sm">
+                        <span className="text-purple-400 font-bold">{gasPercent}%</span>
+                        <span className="text-zinc-500 text-xs ml-1">
+                          ({block.gas_limit ? (block.gas_limit / 1000000).toFixed(1) : 'N/A'}M)
+                        </span>
+                      </div>
+                      <div className="font-mono text-xs text-zinc-500">
+                        {block.gas_used.toLocaleString()} wei
+                      </div>
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-[var(--text-dim)] mb-1 uppercase tracking-wider">Size</div>
-                    <div className="mono text-base">{(block.size / 1024).toFixed(2)} KB</div>
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider">Gas Limit</div>
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold">
+                        {(block.gas_limit / 1000000).toFixed(1)}M
+                      </div>
+                      <div className="font-mono text-xs text-zinc-500">
+                        {block.gas_limit?.toLocaleString() || 'N/A'} wei
+                      </div>
+                    </div>
                   </div>
 
                   <div>
-                    <div className="text-xs text-[var(--text-dim)] mb-1 uppercase tracking-wider">Miner</div>
-                    <div className="mono text-sm text-[var(--cyan)]">
-                      {block.miner.slice(0, 12)}...{block.miner.slice(-8)}
+                    <div className="text-xs text-zinc-500 mb-1 uppercase tracking-wider">Miner</div>
+                    <div className="font-mono text-xs text-cyan-400">
+                      {block.miner ? `${block.miner.slice(0, 10)}...${block.miner.slice(-6)}` : '0x00...0000'}
                     </div>
                   </div>
                 </div>

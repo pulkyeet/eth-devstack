@@ -1,7 +1,12 @@
-export default function LoadingSpinner() {
+export default function LoadingSpinner({ message = "LOADING" }: { message?: string }) {
   return (
-    <div className="flex items-center justify-center p-8">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-blue-600" />
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center">
+        <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-cyan-400/30 border-t-cyan-400 mb-4" />
+        <div className="text-cyan-400 text-xl tracking-wider font-bold">
+          {message.toUpperCase()}...
+        </div>
+      </div>
     </div>
   );
 }

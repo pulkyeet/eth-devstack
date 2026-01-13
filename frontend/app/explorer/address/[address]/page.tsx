@@ -4,47 +4,19 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ErrorMessage from '@/components/ui/ErrorMessage';
+import { formatWei, formatTimestamp, formatTokenBalance } from '@/lib/utils';
+import type { Address, TokenBalance, Transaction } from '@/lib/types';
 
-interface AddressData {
-  address: string;
-  balance: string;
-  nonce: number;
-  is_contract: boolean;
-  tx_count: number;
-  first_seen_block: number;
-  last_seen_block: number;
-  first_seen_at: string;
-  last_seen_at: string;
-  token_balances?: TokenBalance[];
-}
-
-interface TokenBalance {
-  token_address: string;
-  token_name: string;
-  token_symbol: string;
-  token_type: string;
-  balance: string;
-  decimals: number;
-}
-
-interface Transaction {
-  hash: string;
-  block_number: number;
-  timestamp: string;
-  from_address: string;
-  to_address: string | null;
-  value: string;
-  gas_used: number;
-  status: number;
-}
-
+const CHAIN_ID = 1337;
 const API_BASE = 'http://localhost:8080/api/v1';
 
 export default function AddressDetailPage() {
   const params = useParams();
   const address = params.address as string;
   
-  const [addressData, setAddressData] = useState<AddressData | null>(null);
+  const [addressData, setAddressData] = useState<Address | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,8 +25,8 @@ export default function AddressDetailPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_BASE}/addresses/${address}?chain_id=1337`).then(r => r.json()),
-      fetch(`${API_BASE}/addresses/${address}/transactions?chain_id=1337&page=${txPage}&limit=20`).then(r => r.json())
+      fetch(`${API_BASE}/addresses/${address}?chain_id=${CHAIN_ID}`).then(r => r.json()),
+      fetch(`${API_BASE}/addresses/${address}/transactions?chain_id=${CHAIN_ID}&page=${txPage}&limit=20`).then(r => r.json())
     ])
     .then(([addrData, txData]) => {
       if (addrData.success) {
@@ -70,54 +42,14 @@ export default function AddressDetailPage() {
       
       setLoading(false);
     })
-    .catch(err => {
+    .catch(() => {
       setError('Failed to load address data');
       setLoading(false);
     });
   }, [address, txPage]);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center text-zinc-400">Loading address...</div>
-      </div>
-    );
-  }
-
-  if (error || !addressData) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <div className="text-center py-8">
-            <div className="text-red-500 text-xl mb-2">❌ {error}</div>
-            <Link href="/explorer" className="text-cyan-400 hover:text-cyan-300">
-              ← Back to Explorer
-            </Link>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  const formatValue = (wei: string) => {
-    return (BigInt(wei) / BigInt(10 ** 18)).toString();
-  };
-
-  const formatTimestamp = (ts: string) => {
-    const date = new Date(ts);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (diff < 60) return `${diff}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-  };
-
-  const formatTokenBalance = (balance: string, decimals: number) => {
-    const value = BigInt(balance) / BigInt(10 ** decimals);
-    return value.toString();
-  };
+  if (loading) return <LoadingSpinner message="LOADING ADDRESS" />;
+  if (error || !addressData) return <ErrorMessage message={error || 'Address not found'} />;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -144,7 +76,7 @@ export default function AddressDetailPage() {
           <div>
             <div className="text-xs text-zinc-500 mb-2">BALANCE</div>
             <div className="font-mono text-2xl text-cyan-400">
-              {formatValue(addressData.balance)} ETH
+              {formatWei(addressData.balance)} ETH
             </div>
           </div>
           
@@ -164,39 +96,47 @@ export default function AddressDetailPage() {
             </div>
           )}
           
-          <div>
-            <div className="text-xs text-zinc-500 mb-2">FIRST SEEN</div>
-            <div className="font-mono text-sm">
-              Block <Link 
-                href={`/explorer/blocks/${addressData.first_seen_block}`}
-                className="text-purple-400 hover:text-purple-300"
-              >
-                #{addressData.first_seen_block}
-              </Link>
-              <div className="text-zinc-500 text-xs mt-1">
-                {formatTimestamp(addressData.first_seen_at)}
+          {addressData.first_seen_block && (
+            <div>
+              <div className="text-xs text-zinc-500 mb-2">FIRST SEEN</div>
+              <div className="font-mono text-sm">
+                Block <Link 
+                  href={`/explorer/blocks/${addressData.first_seen_block}`}
+                  className="text-purple-400 hover:text-purple-300"
+                >
+                  #{addressData.first_seen_block}
+                </Link>
+                {addressData.first_seen_at && (
+                  <div className="text-zinc-500 text-xs mt-1">
+                    {formatTimestamp(addressData.first_seen_at)}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
           
-          <div>
-            <div className="text-xs text-zinc-500 mb-2">LAST SEEN</div>
-            <div className="font-mono text-sm">
-              Block <Link 
-                href={`/explorer/blocks/${addressData.last_seen_block}`}
-                className="text-purple-400 hover:text-purple-300"
-              >
-                #{addressData.last_seen_block}
-              </Link>
-              <div className="text-zinc-500 text-xs mt-1">
-                {formatTimestamp(addressData.last_seen_at)}
+          {addressData.last_seen_block && (
+            <div>
+              <div className="text-xs text-zinc-500 mb-2">LAST SEEN</div>
+              <div className="font-mono text-sm">
+                Block <Link 
+                  href={`/explorer/blocks/${addressData.last_seen_block}`}
+                  className="text-purple-400 hover:text-purple-300"
+                >
+                  #{addressData.last_seen_block}
+                </Link>
+                {addressData.last_seen_at && (
+                  <div className="text-zinc-500 text-xs mt-1">
+                    {formatTimestamp(addressData.last_seen_at)}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </Card>
 
-      {/* Token Balances Card (if any) */}
+      {/* Token Balances Card */}
       {addressData.token_balances && addressData.token_balances.length > 0 && (
         <Card className="mb-6">
           <h2 className="text-2xl font-semibold mb-4 text-cyan-400">
@@ -325,7 +265,7 @@ export default function AddressDetailPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right font-mono text-sm">
-                        {formatValue(tx.value)} ETH
+                        {formatWei(tx.value)} ETH
                       </td>
                       <td className="py-3 px-4 text-center">
                         {tx.status === 1 ? (

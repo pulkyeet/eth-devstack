@@ -3,9 +3,9 @@
 @import "tailwindcss";
 
 :root {
-  --cyan: #00f5ff;
-  --pink: #ff0055;
-  --purple: #b400ff;
+  --cyan: #22d3ee;
+  --pink: #ec4899;
+  --purple: #a855f7;
   --bg: #000000;
   --bg-card: #0a0a0a;
   --text: #ffffff;
@@ -67,11 +67,19 @@ body::before {
 
 /* Clip path utilities */
 .clip-angle {
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  clip-path: polygon(
+    12px 0, 100% 0, 
+    100% calc(100% - 12px), calc(100% - 12px) 100%, 
+    0 100%, 0 12px
+  );
 }
 
 .clip-angle-sm {
-  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  clip-path: polygon(
+    6px 0, 100% 0,
+    100% calc(100% - 6px), calc(100% - 6px) 100%,
+    0 100%, 0 6px
+  );
 }
 
 /* Glowing borders */
@@ -85,74 +93,70 @@ body::before {
   box-shadow: var(--glow-pink);
 }
 
-/* Aggressive button - angled top-left and bottom-right */
-.aggressive-btn {
+/* --- CLEAN CYBER BUTTONS --- */
+/* --- SIMPLE & RELIABLE CYBER BUTTONS --- */
+.aggressive-btn, .cyber-button {
   position: relative;
-  padding: 12px 28px;
+  padding: 12px 24px;
   background: transparent;
-  border: 2px solid var(--cyan);
+  /* Use a standard border - modern browsers will clip it with the path */
+  border: 1px solid var(--cyan); 
   color: var(--cyan);
   font-weight: 700;
-  font-size: 14px;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  /* The single shape that defines the button */
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 
-.aggressive-btn:hover {
+/* Hover effect: Fill with color */
+.aggressive-btn:hover, .cyber-button:hover {
   background: var(--cyan);
-  color: #000;
+  color: #000; /* Text turns black on the cyan background */
   box-shadow: var(--glow-cyan);
-  transform: translateY(-2px);
 }
 
-.aggressive-btn.active {
-  background: var(--cyan);
-  color: #000;
-  box-shadow: var(--glow-cyan);
-  border-color: var(--cyan);
+/* Disabled state for pagination */
+.cyber-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
-.aggressive-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: var(--pink);
-  box-shadow: var(--glow-pink);
-}
-
-/* Cyber cards */
+/* Cyber cards - Standardized padding */
 .cyber-card {
   position: relative;
   background: var(--bg-card);
   border: 1px solid var(--cyan);
   box-shadow: var(--glow-cyan);
-  padding: 16px 20px;
+  
+  /* Top: 24px, Right: 24px, Bottom: 24px, Left: 32px */
+  padding: 24px 24px 24px 32px !important; 
+  
   transition: all 0.3s ease;
   transform-style: preserve-3d;
+  overflow: hidden; /* Ensures content doesn't bleed out of clipped corners */
 }
 
-.cyber-card:hover {
-  border-color: var(--purple);
-  box-shadow: var(--glow-purple);
-  transform: translateY(-2px);
-}
-
-/* Pink accent bar */
+/* Pink accent bar - Ensure it stays at the very edge */
 .cyber-card::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
-  width: 3px;
+  width: 4px; /* Slightly thicker for better visibility */
   height: 100%;
   background: var(--pink);
   box-shadow: var(--glow-pink);
+  z-index: 2;
+}
+
+/* Safety rule: ensure children don't touch the bar */
+.cyber-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Typography */

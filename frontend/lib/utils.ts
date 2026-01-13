@@ -51,3 +51,8 @@ export function formatNumber(num: number): string {
   }
   return num.toString();
 }
+
+export function formatTokenBalance(balance: string, decimals: number): string {
+  const value = BigInt(balance) / BigInt(10 ** decimals);
+  return value.toString();
+}

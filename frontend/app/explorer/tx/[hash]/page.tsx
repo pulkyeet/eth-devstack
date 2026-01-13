@@ -4,47 +4,25 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ErrorMessage from '@/components/ui/ErrorMessage';
+import { formatWei } from '@/lib/utils';
+import type { Transaction, Log } from '@/lib/types';
 
-interface Transaction {
-  hash: string;
-  block_number: number;
-  block_hash: string;
-  timestamp: string;
-  from_address: string;
-  to_address: string | null;
-  value: string;
-  gas: number;
-  gas_price: string;
-  gas_used: number;
-  effective_gas_price: string;
-  nonce: number;
-  transaction_index: number;
-  transaction_type: number;
-  input: string;
-  status: number;
-  contract_address: string | null;
-}
-
-interface Log {
-  log_index: number;
-  address: string;
-  topics: string[];
-  data: string;
-}
-
+const CHAIN_ID = 1337;
 const API_BASE = 'http://localhost:8080/api/v1';
 
 export default function TransactionDetailPage() {
   const params = useParams();
   const hash = params.hash as string;
-  
+
   const [tx, setTx] = useState<Transaction | null>(null);
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`${API_BASE}/transactions/${hash}?chain_id=1337`)
+    fetch(`${API_BASE}/transactions/${hash}?chain_id=${CHAIN_ID}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -55,42 +33,16 @@ export default function TransactionDetailPage() {
         }
         setLoading(false);
       })
-      .catch(err => {
+      .catch(() => {
         setError('Failed to load transaction');
         setLoading(false);
       });
   }, [hash]);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center text-zinc-400">Loading transaction...</div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner message="LOADING TRANSACTION" />;
+  if (error || !tx) return <ErrorMessage message={error || 'Transaction not found'} />;
 
-  if (error || !tx) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <div className="text-center py-8">
-            <div className="text-red-500 text-xl mb-2">❌ {error}</div>
-            <Link href="/explorer" className="text-cyan-400 hover:text-cyan-300">
-              ← Back to Explorer
-            </Link>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  const formatValue = (wei: string) => {
-    return (BigInt(wei) / BigInt(10 ** 18)).toString();
-  };
-
-  const formatGas = (gas: string) => {
-    return (Number(gas) / 1e9).toFixed(2);
-  };
+  const formatGas = (gas: string) => (Number(gas) / 1e9).toFixed(2);
 
   const getStatusBadge = (status: number) => {
     if (status === 1) {
@@ -101,10 +53,7 @@ export default function TransactionDetailPage() {
     return <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 rounded font-mono text-sm">⏳ PENDING</span>;
   };
 
-  const formatTimestamp = (ts: string) => {
-    const date = new Date(ts);
-    return date.toLocaleString();
-  };
+  const formatTimestamp = (ts: string) => new Date(ts).toLocaleString();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -115,19 +64,19 @@ export default function TransactionDetailPage() {
         </h1>
         <div className="flex items-center gap-3">
           <span className="text-zinc-500 font-mono text-sm">{hash}</span>
-          {getStatusBadge(tx.status)}
+          {getStatusBadge(tx.status || 2)}
         </div>
       </div>
 
       {/* Overview Card */}
       <Card className="mb-6">
         <h2 className="text-2xl font-semibold mb-6 text-cyan-400">Overview</h2>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4 border-b border-zinc-800">
             <div>
               <div className="text-xs text-zinc-500 mb-1">BLOCK</div>
-              <Link 
+              <Link
                 href={`/explorer/blocks/${tx.block_number}`}
                 className="text-purple-400 hover:text-purple-300 font-mono"
               >
@@ -147,7 +96,7 @@ export default function TransactionDetailPage() {
           <div className="grid grid-cols-1 gap-4 pb-4 border-b border-zinc-800">
             <div>
               <div className="text-xs text-zinc-500 mb-1">FROM</div>
-              <Link 
+              <Link
                 href={`/explorer/address/${tx.from_address}`}
                 className="text-cyan-400 hover:text-cyan-300 font-mono text-sm break-all"
               >
@@ -157,7 +106,7 @@ export default function TransactionDetailPage() {
             <div>
               <div className="text-xs text-zinc-500 mb-1">TO</div>
               {tx.to_address ? (
-                <Link 
+                <Link
                   href={`/explorer/address/${tx.to_address}`}
                   className="text-cyan-400 hover:text-cyan-300 font-mono text-sm break-all"
                 >
@@ -172,7 +121,7 @@ export default function TransactionDetailPage() {
             {tx.contract_address && (
               <div>
                 <div className="text-xs text-zinc-500 mb-1">CONTRACT CREATED</div>
-                <Link 
+                <Link
                   href={`/explorer/address/${tx.contract_address}`}
                   className="text-pink-400 hover:text-pink-300 font-mono text-sm break-all"
                 >
@@ -185,15 +134,15 @@ export default function TransactionDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <div className="text-xs text-zinc-500 mb-1">VALUE</div>
-              <div className="font-mono text-lg text-cyan-400">{formatValue(tx.value)} ETH</div>
+              <div className="font-mono text-lg text-cyan-400">{formatWei(tx.value)} ETH</div>
             </div>
             <div>
               <div className="text-xs text-zinc-500 mb-1">GAS USED</div>
-              <div className="font-mono text-sm">{tx.gas_used.toLocaleString()} / {tx.gas.toLocaleString()}</div>
+              <div className="font-mono text-sm">{tx.gas_used?.toLocaleString() || 'N/A'} / {tx.gas.toLocaleString()}</div>
             </div>
             <div>
               <div className="text-xs text-zinc-500 mb-1">GAS PRICE</div>
-              <div className="font-mono text-sm">{formatGas(tx.gas_price)} Gwei</div>
+              <div className="font-mono text-sm">{tx.gas_price ? formatGas(tx.gas_price) : 'N/A'} Gwei</div>
             </div>
           </div>
 
@@ -203,11 +152,14 @@ export default function TransactionDetailPage() {
               <div className="font-mono text-sm">{tx.nonce}</div>
             </div>
             <div>
-              <div className="text-xs text-zinc-500 mb-1">TYPE</div>
-              <div className="font-mono text-sm">
-                {tx.transaction_type === 0 && 'Legacy'}
-                {tx.transaction_type === 1 && 'EIP-2930'}
-                {tx.transaction_type === 2 && 'EIP-1559'}
+              <div>
+                <div className="text-xs text-zinc-500 mb-1">TYPE</div>
+                <div className="font-mono text-sm">
+                  {tx.transaction_type === 0 ? 'Legacy' :
+                    tx.transaction_type === 1 ? 'EIP-2930' :
+                      tx.transaction_type === 2 ? 'EIP-1559' :
+                        'Unknown'}
+                </div>
               </div>
             </div>
           </div>
@@ -242,7 +194,7 @@ export default function TransactionDetailPage() {
                   </div>
                   <div>
                     <span className="text-xs text-zinc-500">Address: </span>
-                    <Link 
+                    <Link
                       href={`/explorer/address/${log.address}`}
                       className="font-mono text-sm text-cyan-400 hover:text-cyan-300"
                     >
@@ -250,7 +202,7 @@ export default function TransactionDetailPage() {
                     </Link>
                   </div>
                 </div>
-                
+
                 {log.topics.length > 0 && (
                   <div className="mb-2">
                     <div className="text-xs text-zinc-500 mb-2">Topics:</div>
@@ -261,7 +213,7 @@ export default function TransactionDetailPage() {
                     ))}
                   </div>
                 )}
-                
+
                 {log.data && log.data !== '0x' && (
                   <div>
                     <div className="text-xs text-zinc-500 mb-1">Data:</div>
@@ -278,7 +230,7 @@ export default function TransactionDetailPage() {
 
       {/* Back link */}
       <div className="mt-6 text-center">
-        <Link 
+        <Link
           href={`/explorer/blocks/${tx.block_number}`}
           className="text-cyan-400 hover:text-cyan-300"
         >

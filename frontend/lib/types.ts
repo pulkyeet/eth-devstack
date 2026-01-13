@@ -45,6 +45,10 @@ export interface Transaction {
   status?: number;
   gas_used?: number;
   timestamp: string;
+  contract_address?: string | null;
+  logs?: Log[];
+  effective_gas_price?: string;
+  transaction_type?: number;
 }
 
 export interface Address {
@@ -57,6 +61,23 @@ export interface Address {
   last_seen_block?: number;
   first_seen_at?: string;
   last_seen_at?: string;
+  token_balances?: TokenBalance[];
+}
+
+export interface TokenBalance {
+  token_address: string;
+  token_name: string;
+  token_symbol: string;
+  token_type: string;
+  balance: string;
+  decimals: number;
+}
+
+export interface Log {
+  log_index: number;
+  address: string;
+  topics: string[];
+  data: string;
 }
 
 export interface Stats {
