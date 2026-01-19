@@ -1,55 +1,46 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import ErrorMessage from '@/components/ui/ErrorMessage';
 import { formatWei, formatTimestamp, formatTokenBalance } from '@/lib/utils';
-import type { Address, TokenBalance, Transaction } from '@/lib/types';
+import { loadAddressByAddress, loadTransactions } from '@/lib/snapshot';
 
-const CHAIN_ID = 1337;
-const API_BASE = 'http://localhost:8080/api/v1';
-
-export default function AddressDetailPage() {
-  const params = useParams();
-  const address = params.address as string;
+export default async function AddressDetailPage({ params }: { params: { address: string } }) {
+  const resolvedParams = await params;
+  const result = await loadAddressByAddress(resolvedParams.address);
   
-  const [addressData, setAddressData] = useState<Address | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [txPage, setTxPage] = useState(1);
-  const [totalTxPages, setTotalTxPages] = useState(1);
+  if (!result.success) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold mb-4 text-yellow-400">Address Not in Snapshot</h2>
+          <p className="text-zinc-400 mb-6">
+            Address {resolvedParams.address.slice(0, 10)}...{resolvedParams.address.slice(-8)} is not part of the frozen snapshot.
+          </p>
+          <div className="space-y-3 text-sm text-zinc-500">
+            <p>
+              <a href="https://github.com/YOUR_REPO" className="text-cyan-400 hover:text-cyan-300 underline">
+                Clone the repo
+              </a> and run locally to explore all addresses.
+            </p>
+            <p>Or <a href="https://youtube.com/YOUR_VIDEO" className="text-cyan-400 hover:text-cyan-300 underline">watch the demo video</a></p>
+          </div>
+          <div className="mt-6">
+            <Link href="/explorer" className="text-cyan-400 hover:text-cyan-300">
+              ← Back to Explorer
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    Promise.all([
-      fetch(`${API_BASE}/addresses/${address}?chain_id=${CHAIN_ID}`).then(r => r.json()),
-      fetch(`${API_BASE}/addresses/${address}/transactions?chain_id=${CHAIN_ID}&page=${txPage}&limit=20`).then(r => r.json())
-    ])
-    .then(([addrData, txData]) => {
-      if (addrData.success) {
-        setAddressData(addrData.data);
-      } else {
-        setError('Address not found');
-      }
-      
-      if (txData.success) {
-        setTransactions(txData.data.transactions || []);
-        setTotalTxPages(txData.data.pagination?.total_pages || 1);
-      }
-      
-      setLoading(false);
-    })
-    .catch(() => {
-      setError('Failed to load address data');
-      setLoading(false);
-    });
-  }, [address, txPage]);
-
-  if (loading) return <LoadingSpinner message="LOADING ADDRESS" />;
-  if (error || !addressData) return <ErrorMessage message={error || 'Address not found'} />;
+  const addressData = result.data;
+  
+  // Load transactions involving this address
+  const txData = await loadTransactions();
+  const allTxs = txData.data.transactions || [];
+  const transactions = allTxs.filter((tx: any) => 
+    tx.from_address === resolvedParams.address || tx.to_address === resolvedParams.address
+  ).slice(0, 20); // Show max 20 in snapshot
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -59,7 +50,7 @@ export default function AddressDetailPage() {
           {addressData.is_contract ? 'Contract' : 'Address'}
         </h1>
         <div className="flex items-center gap-3">
-          <span className="text-zinc-400 font-mono text-sm break-all">{address}</span>
+          <span className="text-zinc-400 font-mono text-sm break-all">{resolvedParams.address}</span>
           {addressData.is_contract && (
             <span className="px-3 py-1 bg-pink-500/20 text-pink-400 border border-pink-500/50 rounded font-mono text-xs">
               CONTRACT
@@ -153,7 +144,7 @@ export default function AddressDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {addressData.token_balances.map((token, idx) => (
+                {addressData.token_balances.map((token: any, idx: number) => (
                   <tr key={idx} className="border-b border-zinc-800/50 hover:bg-zinc-900/50">
                     <td className="py-3 px-4">
                       <div className="font-semibold">{token.token_name}</div>
@@ -187,122 +178,102 @@ export default function AddressDetailPage() {
       <Card>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold text-cyan-400">
-            Transactions
+            Recent Transactions
           </h2>
-          <div className="text-sm text-zinc-500">
-            Page {txPage} of {totalTxPages}
-          </div>
+          {transactions.length > 0 && addressData.tx_count > transactions.length && (
+            <div className="text-sm text-zinc-500">
+              Showing {transactions.length} of {addressData.tx_count}
+            </div>
+          )}
         </div>
 
         {transactions.length > 0 ? (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-zinc-800">
-                    <th className="text-left py-3 px-4 text-xs text-zinc-500">TX HASH</th>
-                    <th className="text-left py-3 px-4 text-xs text-zinc-500">BLOCK</th>
-                    <th className="text-left py-3 px-4 text-xs text-zinc-500">AGE</th>
-                    <th className="text-left py-3 px-4 text-xs text-zinc-500">FROM/TO</th>
-                    <th className="text-right py-3 px-4 text-xs text-zinc-500">VALUE</th>
-                    <th className="text-center py-3 px-4 text-xs text-zinc-500">STATUS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => (
-                    <tr key={tx.hash} className="border-b border-zinc-800/50 hover:bg-zinc-900/50">
-                      <td className="py-3 px-4">
-                        <Link 
-                          href={`/explorer/tx/${tx.hash}`}
-                          className="font-mono text-cyan-400 hover:text-cyan-300 text-sm"
-                        >
-                          {tx.hash.slice(0, 10)}...{tx.hash.slice(-8)}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Link 
-                          href={`/explorer/blocks/${tx.block_number}`}
-                          className="font-mono text-purple-400 hover:text-purple-300 text-sm"
-                        >
-                          {tx.block_number}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-zinc-400">
-                        {formatTimestamp(tx.timestamp)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="text-xs space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-zinc-500">From:</span>
-                            {tx.from_address === address ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left py-3 px-4 text-xs text-zinc-500">TX HASH</th>
+                  <th className="text-left py-3 px-4 text-xs text-zinc-500">BLOCK</th>
+                  <th className="text-left py-3 px-4 text-xs text-zinc-500">AGE</th>
+                  <th className="text-left py-3 px-4 text-xs text-zinc-500">FROM/TO</th>
+                  <th className="text-right py-3 px-4 text-xs text-zinc-500">VALUE</th>
+                  <th className="text-center py-3 px-4 text-xs text-zinc-500">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((tx: any) => (
+                  <tr key={tx.hash} className="border-b border-zinc-800/50 hover:bg-zinc-900/50">
+                    <td className="py-3 px-4">
+                      <Link 
+                        href={`/explorer/tx/${tx.hash}`}
+                        className="font-mono text-cyan-400 hover:text-cyan-300 text-sm"
+                      >
+                        {tx.hash.slice(0, 10)}...{tx.hash.slice(-8)}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Link 
+                        href={`/explorer/blocks/${tx.block_number}`}
+                        className="font-mono text-purple-400 hover:text-purple-300 text-sm"
+                      >
+                        {tx.block_number}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-zinc-400">
+                      {formatTimestamp(tx.timestamp)}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="text-xs space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-zinc-500">From:</span>
+                          {tx.from_address === resolvedParams.address ? (
+                            <span className="text-yellow-400 font-mono">this address</span>
+                          ) : (
+                            <Link 
+                              href={`/explorer/address/${tx.from_address}`}
+                              className="font-mono text-cyan-400 hover:text-cyan-300"
+                            >
+                              {tx.from_address.slice(0, 6)}...{tx.from_address.slice(-4)}
+                            </Link>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-zinc-500">To:</span>
+                          {tx.to_address ? (
+                            tx.to_address === resolvedParams.address ? (
                               <span className="text-yellow-400 font-mono">this address</span>
                             ) : (
                               <Link 
-                                href={`/explorer/address/${tx.from_address}`}
+                                href={`/explorer/address/${tx.to_address}`}
                                 className="font-mono text-cyan-400 hover:text-cyan-300"
                               >
-                                {tx.from_address.slice(0, 6)}...{tx.from_address.slice(-4)}
+                                {tx.to_address.slice(0, 6)}...{tx.to_address.slice(-4)}
                               </Link>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-zinc-500">To:</span>
-                            {tx.to_address ? (
-                              tx.to_address === address ? (
-                                <span className="text-yellow-400 font-mono">this address</span>
-                              ) : (
-                                <Link 
-                                  href={`/explorer/address/${tx.to_address}`}
-                                  className="font-mono text-cyan-400 hover:text-cyan-300"
-                                >
-                                  {tx.to_address.slice(0, 6)}...{tx.to_address.slice(-4)}
-                                </Link>
-                              )
-                            ) : (
-                              <span className="text-zinc-500">[Contract Creation]</span>
-                            )}
-                          </div>
+                            )
+                          ) : (
+                            <span className="text-zinc-500">[Contract Creation]</span>
+                          )}
                         </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono text-sm">
-                        {formatWei(tx.value)} ETH
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {tx.status === 1 ? (
-                          <span className="text-green-400">✓</span>
-                        ) : (
-                          <span className="text-red-400">✗</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {totalTxPages > 1 && (
-              <div className="flex justify-center gap-2 mt-6">
-                <button
-                  onClick={() => setTxPage(p => Math.max(1, p - 1))}
-                  disabled={txPage === 1}
-                  className="cyber-button px-4 py-2 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setTxPage(p => Math.min(totalTxPages, p + 1))}
-                  disabled={txPage === totalTxPages}
-                  className="cyber-button px-4 py-2 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-sm">
+                      {formatWei(tx.value)} ETH
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {tx.status === 1 ? (
+                        <span className="text-green-400">✓</span>
+                      ) : (
+                        <span className="text-red-400">✗</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="text-center py-8 text-zinc-500">
-            No transactions found for this address
+            No transactions found in snapshot for this address
           </div>
         )}
       </Card>

@@ -80,14 +80,14 @@ export default function Header() {
 
           {/* Nav Buttons */}
           <div className="flex items-center gap-3">
+            <Link href="/explorer">
+              <button className="aggressive-btn">Explorer</button>
+            </Link>
             <Link href="/explorer/blocks">
-              <button className="cyber-button">Blocks</button>
+              <button className="aggressive-btn">Blocks</button>
             </Link>
-            <Link href="/explorer">
-              <button className="cyber-button">Transactions</button>
-            </Link>
-            <Link href="/explorer">
-              <button className="cyber-button">Addresses</button>
+            <Link href="/explorer/transactions">
+              <button className="aggressive-btn">Transactions</button>
             </Link>
           </div>
         </div>

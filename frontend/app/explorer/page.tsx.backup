@@ -1,0 +1,171 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Card from '@/components/ui/Card';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { getStats, getBlocks, getTransactions } from '@/lib/api';
+import { formatTimestamp, formatWei, shortenHash } from '@/lib/utils';
+import type { Block, Transaction, Stats } from '@/lib/types';
+
+const CHAIN_ID = 1337;
+
+export default function ExplorerDashboard() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [recentBlocks, setRecentBlocks] = useState<Block[]>([]);
+  const [recentTxs, setRecentTxs] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      getStats(CHAIN_ID),
+      getBlocks(CHAIN_ID, 1, 5),
+      getTransactions(CHAIN_ID, 1, 10),
+    ])
+      .then(([statsData, blocksData, txsData]) => {
+        setStats(statsData);
+        setRecentBlocks(blocksData.blocks);
+        setRecentTxs(txsData.transactions);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <LoadingSpinner message="LOADING DASHBOARD" />;
+
+  return (
+    <div className="container mx-auto px-6 py-8 space-y-10">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Latest Block</div>
+          <div className="text-3xl font-bold text-cyan-400">
+            #{stats?.latest_block || 0}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Total Transactions</div>
+          <div className="text-3xl font-bold text-purple-400">
+            {stats?.total_transactions?.toLocaleString() || 0}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Avg Block Time</div>
+          <div className="text-3xl font-bold text-pink-400">
+            {stats?.avg_block_time?.toFixed(1) || 0}s
+          </div>
+        </Card>
+
+        <Card>
+          <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">24h TPS</div>
+          <div className="text-3xl font-bold text-cyan-400">
+            {stats?.tps_24h?.toFixed(1) || 0}
+          </div>
+        </Card>
+      </div>
+
+      {/* Recent Blocks */}
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-black uppercase tracking-tight text-white">
+            Recent Blocks
+          </h2>
+          <Link href="/explorer/blocks">
+            <button className="aggressive-btn text-sm">VIEW ALL</button>
+          </Link>
+        </div>
+
+        <div className="space-y-3">
+          {recentBlocks.map((block) => (
+            <Link key={block.hash} href={`/explorer/blocks/${block.block_number}`}>
+              <Card>
+                <div className="grid grid-cols-[100px_1fr_120px_80px] gap-6 items-center">
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">BLOCK</div>
+                    <div className="text-xl font-bold text-purple-400">
+                      #{block.block_number}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">HASH</div>
+                    <div className="font-mono text-sm text-cyan-400">
+                      {shortenHash(block.hash)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">AGE</div>
+                    <div className="text-sm font-semibold">{formatTimestamp(block.timestamp)}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">TXS</div>
+                    <div className="text-lg font-bold text-pink-400">{block.tx_count}</div>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Transactions */}
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-black uppercase tracking-tight text-white">
+            Recent Transactions
+          </h2>
+          <Link href="/explorer/transactions">
+            <button className="aggressive-btn text-sm">VIEW ALL</button>
+          </Link>
+        </div>
+
+        <div className="space-y-3">
+          {recentTxs.map((tx) => (
+            <Link key={tx.hash} href={`/explorer/tx/${tx.hash}`}>
+              <Card>
+                <div className="grid grid-cols-[120px_1fr_1fr_120px_100px] gap-6 items-center">
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">HASH</div>
+                    <div className="font-mono text-sm text-cyan-400">
+                      {shortenHash(tx.hash)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">FROM</div>
+                    <div className="font-mono text-xs text-zinc-400">
+                      {shortenHash(tx.from_address)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">TO</div>
+                    <div className="font-mono text-xs text-zinc-400">
+                      {tx.to_address ? shortenHash(tx.to_address) : 'Contract Creation'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">VALUE</div>
+                    <div className="text-sm font-semibold text-purple-400">
+                      {formatWei(tx.value)} ETH
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-zinc-500 mb-1">AGE</div>
+                    <div className="text-sm">{formatTimestamp(tx.timestamp)}</div>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

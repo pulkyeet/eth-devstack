@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "data": {
+    "chain_id": 1337,
+    "latest_block":  20119,
+    "start_block": 20020,
+    "avg_block_time": 2.0,
+    "tps": 36.5,
+    "total_transactions":   7527,
+    "total_addresses":    128,
+    "note": "Frozen snapshot - last 100 blocks with data"
+  }
+}
