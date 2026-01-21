@@ -6,10 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/pulkyeet/eth-devstack/backend/internal/api"
 	"github.com/pulkyeet/eth-devstack/backend/internal/config"
 	"github.com/pulkyeet/eth-devstack/backend/internal/database"
 	"github.com/pulkyeet/eth-devstack/backend/internal/utils"
-	"github.com/pulkyeet/eth-devstack/backend/internal/api"
+	"github.com/pulkyeet/eth-devstack/backend/internal/wallet"
 )
 
 func main() {
@@ -41,7 +42,11 @@ func main() {
 	}
 	defer db.Close()
 
-	server := api.NewServer(db, logger, cfg.Server.Port)
+	// Initialize wallet service
+	walletService := wallet.NewService(db, logger)
+	sugar.Info("Wallet service initialized")
+
+	server := api.NewServer(db, walletService, logger, cfg.Server.Port)
 
 	go func() {
 		if err := server.Start(); err != nil {

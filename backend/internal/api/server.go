@@ -8,17 +8,19 @@ import (
 	"github.com/pulkyeet/eth-devstack/backend/internal/api/middleware"
 	"github.com/pulkyeet/eth-devstack/backend/internal/database"
 	"github.com/pulkyeet/eth-devstack/backend/internal/responses"
+	"github.com/pulkyeet/eth-devstack/backend/internal/wallet"
 	"go.uber.org/zap"
 )
 
 type Server struct {
-	app *fiber.App
-	db *database.DB
-	logger *zap.Logger
-	port string
+	app           *fiber.App
+	db            *database.DB
+	logger        *zap.Logger
+	walletService *wallet.Service
+	port          string
 }
 
-func NewServer(db *database.DB, logger *zap.Logger, port string) *Server {
+func NewServer(db *database.DB, walletService *wallet.Service, logger *zap.Logger, port string) *Server {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -41,6 +43,7 @@ func NewServer(db *database.DB, logger *zap.Logger, port string) *Server {
 	searchHandler := handlers.NewSearchHandler(db)
 	streamHandler := handlers.NewStreamHandler(db, logger)
 	statsHandler := handlers.NewStatsHandler(db)
+	walletHandler := handlers.NewWalletHandler(walletService)
 
 	api := app.Group("/api/v1")
 
@@ -55,6 +58,7 @@ func NewServer(db *database.DB, logger *zap.Logger, port string) *Server {
 
 	api.Get("/addresses/:address", addrHandler.GetAddress)
 	api.Get("/addresses/:address/transactions", addrHandler.GetAddressTransactions)
+	api.Get("/addresses/:address/tokens", addrHandler.GetAddressTokens)
 
 	api.Get("/search", searchHandler.Search)
 
@@ -62,13 +66,21 @@ func NewServer(db *database.DB, logger *zap.Logger, port string) *Server {
 
 	api.Get("/stats", statsHandler.GetStats)
 
-	api.Get("/addresses/:address/tokens", addrHandler.GetAddressTokens)
+	// Wallet endpoints
+	api.Post("/wallet/create", walletHandler.CreateWallet)
+	api.Post("/wallet/import", walletHandler.ImportWallet)
+	api.Get("/wallet/:id", walletHandler.GetWallet)
+	api.Get("/wallet/:id/balance", walletHandler.GetBalance)
+	api.Post("/wallet/send", walletHandler.SendTransaction)
+	api.Post("/wallet/sign", walletHandler.SignMessage)
+	api.Get("/wallet/:id/transactions", walletHandler.GetTransactions)
 
 	return &Server{
-		app: app,
-		db: db,
-		logger: logger,
-		port: port,
+		app:           app,
+		db:            db,
+		logger:        logger,
+		walletService: walletService,
+		port:          port,
 	}
 }
 
