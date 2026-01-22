@@ -103,7 +103,7 @@ func (h *WalletHandler) GetBalance(c *fiber.Ctx) error {
 	}
 
 	// Check if should update from chain
-	updateFromChain := c.QueryBool("update", false)
+	updateFromChain := c.QueryBool("update", true)
 
 	balances, err := h.service.GetBalances(c.Context(), id, updateFromChain)
 	if err != nil {

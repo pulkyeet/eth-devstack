@@ -43,7 +43,7 @@ func main() {
 	defer db.Close()
 
 	// Initialize wallet service
-	walletService := wallet.NewService(db, logger)
+	walletService := wallet.NewService(db, logger, cfg)
 	sugar.Info("Wallet service initialized")
 
 	server := api.NewServer(db, walletService, logger, cfg.Server.Port)

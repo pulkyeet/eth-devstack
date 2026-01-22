@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pulkyeet/eth-devstack/backend/internal/database"
+	"github.com/pulkyeet/eth-devstack/backend/internal/config"
 	"go.uber.org/zap"
 )
 
@@ -20,13 +21,15 @@ type Service struct {
 	db      *database.DB
 	logger  *zap.SugaredLogger
 	clients map[int64]*ethclient.Client
+	config  *config.Config
 }
 
-func NewService(db *database.DB, logger *zap.Logger) *Service {
+func NewService(db *database.DB, logger *zap.Logger, cfg *config.Config) *Service {
 	return &Service{
 		db:      db,
 		logger:  logger.Sugar(),
 		clients: make(map[int64]*ethclient.Client),
+		config:  cfg,
 	}
 }
 
