@@ -89,6 +89,9 @@ export default function Header() {
             <Link href="/explorer/transactions">
               <button className="aggressive-btn">Transactions</button>
             </Link>
+            <Link href="/wallet">
+              <button className="aggressive-btn">Wallet</button>
+            </Link>
           </div>
         </div>
       </div>

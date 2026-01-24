@@ -110,3 +110,66 @@ export interface ApiResponse<T> {
     message: string;
   };
 }
+
+export interface Wallet {
+  id: string;
+  address: string;
+  name: string;
+}
+
+export interface CreateWalletRequest {
+  name: string;
+  password: string;
+}
+
+export interface CreateWalletResponse {
+  id: string;
+  address: string;
+  mnemonic: string; // ⚠️ SHOWN ONCE
+  name: string;
+}
+
+export interface ImportWalletRequest {
+  method: 'private_key' | 'mnemonic';
+  private_key?: string;
+  mnemonic?: string;
+  password: string;
+  name: string;
+}
+
+export interface Balance {
+  chain_id: number;
+  chain_name: string;
+  balance: string; // Wei as string
+  symbol: string;
+}
+
+export interface BalanceResponse {
+  wallet_id: string;
+  balances: Balance[];
+}
+
+export interface SendTransactionRequest {
+  wallet_id: string;
+  chain_id: number;
+  to: string;
+  value: string; // Wei as string
+  password: string;
+  gas_limit?: number;
+  gas_price?: string;
+}
+
+export interface SendTransactionResponse {
+  tx_hash: string;
+  status: 'pending';
+}
+
+// Helper: Convert wei to ETH
+export function weiToEth(wei: string): string {
+  return (parseFloat(wei) / 1e18).toFixed(4);
+}
+
+// Helper: Convert ETH to wei
+export function ethToWei(eth: string): string {
+  return (parseFloat(eth) * 1e18).toString();
+}

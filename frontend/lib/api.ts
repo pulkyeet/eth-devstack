@@ -1,4 +1,17 @@
-import type { ApiResponse, Block, Transaction, Address, Stats, Chain, Pagination } from './types';
+import type { 
+  ApiResponse, 
+  Block, 
+  Transaction, 
+  Address, 
+  Stats, 
+  Chain, 
+  Pagination,
+  CreateWalletResponse,
+  ImportWalletRequest,
+  BalanceResponse,
+  SendTransactionRequest,
+  SendTransactionResponse
+} from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
@@ -70,4 +83,38 @@ export async function getStats(chainId: number): Promise<Stats> {
 
 export function createBlockStream(chainId: number): EventSource {
   return new EventSource(`${API_BASE}/stream/blocks?chain_id=${chainId}`);
+}
+
+async function postAPI<T>(endpoint: string, body: any): Promise<T> {
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: { message: 'Request failed' } }));
+    throw new Error(error.error?.message || `HTTP ${res.status}`);
+  }
+  const json: ApiResponse<T> = await res.json();
+  if (!json.success) {
+    throw new Error(json.error?.message || 'API request failed');
+  }
+  return json.data;
+}
+
+export async function createWallet(name: string, password: string) {
+  return postAPI<CreateWalletResponse>('/wallet/create', { name, password });
+}
+
+export async function importWallet(req: ImportWalletRequest) {
+  return postAPI<{ id: string; address: string; name: string }>('/wallet/import', req);
+}
+
+export async function getWalletBalance(walletId: string): Promise<BalanceResponse> {
+  // ⚠️ CRITICAL: Must add ?update=true or returns null
+  return fetchAPI(`/wallet/${walletId}/balance?update=true`);
+}
+
+export async function sendTransaction(req: SendTransactionRequest) {
+  return postAPI<SendTransactionResponse>('/wallet/send', req);
 }
